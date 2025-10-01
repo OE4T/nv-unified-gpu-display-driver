@@ -11,6 +11,8 @@ ARCH=$2
 SOURCES=$3
 HEADERS=$SOURCES/include
 OUTPUT=$4
+OOT_SOURCES=$5
+OOT_HEADERS=$OOT_SOURCES/include
 XEN_PRESENT=1
 PREEMPT_RT_PRESENT=0
 
@@ -172,6 +174,8 @@ build_cflags() {
     CFLAGS="$CFLAGS -I$SOURCE_ARCH_HEADERS/uapi"
     CFLAGS="$CFLAGS -I$OUTPUT_ARCH_HEADERS/generated"
     CFLAGS="$CFLAGS -I$OUTPUT_ARCH_HEADERS/generated/uapi"
+    CFLAGS="$CFLAGS -I$OOT_HEADERS"
+    CFLAGS="$CFLAGS -I$OOT_HEADERS/uapi"
 
     if [ -n "$BUILD_PARAMS" ]; then
         CFLAGS="$CFLAGS -D$BUILD_PARAMS"
@@ -341,7 +345,7 @@ check_symbol_exists() {
         # Check Module.symvers to see whether the given symbol is present.
         #
         if grep -e "${TAB}${SYMBOL}${TAB}.*${TAB}EXPORT_SYMBOL.*\$" \
-                    ${MODULE_SYMVERS_PATHS} >/dev/null 2>&1; then
+                    ${MODULE_SYMVERS_PATHS} "$OOT_SOURCES/Module.symvers" >/dev/null 2>&1; then
             return 0
         fi
     else
@@ -399,7 +403,7 @@ export_symbol_gpl_conftest() {
     TAB='	'
 
     if grep -e "${TAB}${SYMBOL}${TAB}.*${TAB}EXPORT_\(UNUSED_\)*SYMBOL_GPL\s*\$" \
-                ${MODULE_SYMVERS_PATHS} >/dev/null 2>&1; then
+                ${MODULE_SYMVERS_PATHS} "$OOT_SOURCES/Module.symvers" >/dev/null 2>&1; then
         echo "#define NV_IS_EXPORT_SYMBOL_GPL_$SYMBOL 1" |
             append_conftest "symbols"
     else
@@ -5067,13 +5071,13 @@ compile_test() {
     esac
 }
 
-case "$5" in
+case "$6" in
     cc_sanity_check)
         #
         # Check if the selected compiler can create object files
         # in the current environment.
         #
-        VERBOSE=$6
+        VERBOSE=$7
 
         echo "int cc_sanity_check(void) {
             return 0;
@@ -5140,7 +5144,7 @@ case "$5" in
         #  In order to extract GCC version correctly for version strings
         #  like the last one above, we first check for x.y.z and if that
         #  fails, we fallback to x.y format.
-        VERBOSE=$6
+        VERBOSE=$7
 
         kernel_compile_h=$OUTPUT/include/generated/compile.h
 
@@ -5219,7 +5223,7 @@ case "$5" in
         # Check if the target kernel is a Xen kernel. If so, exit, since
         # the RM doesn't currently support Xen.
         #
-        VERBOSE=$6
+        VERBOSE=$7
 
         if [ -n "$IGNORE_XEN_PRESENCE" -o -n "$VGX_BUILD" ]; then
             exit 0
@@ -5251,7 +5255,7 @@ case "$5" in
         # Check if the target kernel has the PREEMPT_RT patch set applied. If
         # so, exit, since the RM doesn't support this configuration.
         #
-        VERBOSE=$6
+        VERBOSE=$7
 
         if [ -n "$IGNORE_PREEMPT_RT_PRESENCE" ]; then
             exit 0
@@ -5314,7 +5318,7 @@ case "$5" in
         # Run a series of compile tests to determine the set of interfaces
         # and features available in the target kernel.
         #
-        shift 5
+        shift 6
 
         CFLAGS=$1
         shift
@@ -5328,7 +5332,7 @@ case "$5" in
         #
         # Determine whether running in DOM0.
         #
-        VERBOSE=$6
+        VERBOSE=$7
 
         if [ -n "$VGX_BUILD" ]; then
             if [ -f /proc/xen/capabilities ]; then
@@ -5350,7 +5354,7 @@ case "$5" in
         #
         # Determine whether we are running a vGPU on KVM host.
         #
-        VERBOSE=$6
+        VERBOSE=$7
         iommu=CONFIG_VFIO_IOMMU_TYPE1
         iommufd_vfio_container=CONFIG_IOMMUFD_VFIO_CONTAINER
         mdev=CONFIG_VFIO_MDEV
@@ -5420,7 +5424,7 @@ case "$5" in
         #
         # Check to see if the given config option is set.
         #
-        OPTION=$6
+        OPTION=$7
 
         test_configuration_option $OPTION
         exit $?
@@ -5430,7 +5434,7 @@ case "$5" in
         #
         # Get the value of the given config option.
         #
-        OPTION=$6
+        OPTION=$7
 
         get_configuration_option $OPTION
         exit $?
@@ -5465,9 +5469,9 @@ case "$5" in
         # Check for the availability of the given kernel header
         #
 
-        CFLAGS=$6
+        CFLAGS=$7
 
-        test_header_presence "${7}"
+        test_header_presence "${8}"
 
         exit $?
     ;;
