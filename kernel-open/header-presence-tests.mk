@@ -20,6 +20,7 @@ NV_HEADER_PRESENCE_TESTS = \
   generated/utsrelease.h \
   linux/aperture.h \
   linux/dma-direct.h \
+  linux/pfn_t.h \
   linux/platform/tegra/mc_utils.h \
   xen/ioemu.h \
   linux/fence.h \

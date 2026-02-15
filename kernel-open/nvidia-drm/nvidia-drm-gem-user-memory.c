@@ -33,7 +33,11 @@
 #include "linux/dma-buf.h"
 #include "linux/mm.h"
 #include "nv-mm.h"
+#if defined(NV_LINUX_PFN_T_H_PRESENT)
 #include "linux/pfn_t.h"
+#else
+#define pfn_to_pfn_t(x) (x)
+#endif
 
 #if defined(NV_BSD)
 #include <vm/vm_pageout.h>
